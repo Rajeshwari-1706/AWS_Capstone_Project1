@@ -2,6 +2,30 @@
 # In a production environment, ensure to implement proper security measures.
 from flask import Flask, render_template, request, redirect, session
 import sqlite3
+import boto3
+import uuid
+from botocore.exceptions import ClientError
+
+app = Flask(__name__)
+app.secret_key = "train_secret_key"
+
+# AWS Config
+REGION = "us-east-1"
+dynamodb = boto3.resource("dynamodb", region_name=REGION)
+sns = boto3.client("sns", region_name=REGION)
+
+# Tables
+users_table = dynamodb.Table("Users")
+trains_table = dynamodb.Table("Trains")
+bookings_table = dynamodb.Table("Bookings")
+
+SNS_TOPIC_ARN = "arn:aws:sns:us-east-1:148761664676:project_topics"
+
+def send_notification(subject, message):
+    try:
+        sns.publish(TopicArn=SNS_TOPIC_ARN, Subject=subject, Message=message)
+    except ClientError as e:
+        print("SNS Error:", e)
 
 def get_db():
     conn = sqlite3.connect("train.db")
@@ -72,4 +96,5 @@ def logout():
 if __name__ == "__main__":
     app.run(debug=True)# Note: Database operations and user authentication are simplified for demonstration purposes.
 # In a production environment, ensure to implement proper security measures.            
+
 
